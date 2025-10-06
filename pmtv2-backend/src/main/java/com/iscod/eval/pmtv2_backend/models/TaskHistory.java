@@ -21,7 +21,7 @@ public class TaskHistory {
     private String oldValue;
     private String newValue;
 
-    @Column(name = "change_date", insertable = false, updatable = false)
+    @Column(name = "change_date")
     private LocalDateTime changeDate;
 
     // --- Relations ---

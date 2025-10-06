@@ -19,4 +19,12 @@ public class UserService {
     public Optional<User> getById(Long id) { return repo.findById(id); }
     public User save(User u) { return repo.save(u); }
     public void delete(Long id) { repo.deleteById(id); }
+
+    public Optional<User> findByEmail(String email) {
+        return repo.findByEmail(email);
+    }
+
+    public boolean existsByEmail(String email) {
+        return repo.existsByEmail(email);
+    }
 }

@@ -1,7 +1,12 @@
 package com.iscod.eval.pmtv2_backend.controllers;
 
 import com.iscod.eval.pmtv2_backend.models.Project;
+
+import com.iscod.eval.pmtv2_backend.models.Task;
+import com.iscod.eval.pmtv2_backend.repositories.ProjectRepository;
+import com.iscod.eval.pmtv2_backend.repositories.TaskRepository;
 import com.iscod.eval.pmtv2_backend.services.ProjectService;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,9 +17,15 @@ import java.util.List;
 public class ProjectController {
 
     private final ProjectService service;
+    private final ProjectRepository projectRepository;
+    private final TaskRepository taskRepository;
 
-    public ProjectController(ProjectService service) {
+    public ProjectController(ProjectService service,
+                             ProjectRepository projectRepository,
+                             TaskRepository taskRepository) {
         this.service = service;
+        this.projectRepository = projectRepository;
+        this.taskRepository = taskRepository;
     }
 
     @GetMapping

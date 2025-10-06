@@ -30,21 +30,25 @@ public class Task {
     private String priority;
     private String status;
 
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
     // --- Relations ---
+    @Setter
     @ManyToOne
     @JoinColumn(name = "project_id", nullable = false)
-    @JsonBackReference // pour éviter boucle avec Project
+    @JsonBackReference 
     private Project project;
 
     @ManyToOne
     @JoinColumn(name = "assignee_id")
     private User assignedTo;
 
-    @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JsonManagedReference
     private Set<TaskHistory> history = new HashSet<>();
 
     @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private Set<Notification> notifications = new HashSet<>();
+
 }
