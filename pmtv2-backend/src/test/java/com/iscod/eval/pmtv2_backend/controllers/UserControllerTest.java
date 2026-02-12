@@ -91,6 +91,28 @@ class UserControllerTest {
     }
 
     @Test
+    void shouldUpdatePasswordFound() throws Exception {
+        User user = User.builder().id(1L).username("Alice").email("alice@example.com").password("old").build();
+        when(service.getById(1L)).thenReturn(Optional.of(user));
+        when(service.save(any(User.class))).thenReturn(user);
+
+        mockMvc.perform(patch("/api/users/1/password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"password\": \"newpwd\"}"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void shouldUpdatePasswordNotFound() throws Exception {
+        when(service.getById(99L)).thenReturn(Optional.empty());
+
+        mockMvc.perform(patch("/api/users/99/password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"password\": \"newpwd\"}"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
     void shouldDeleteUserFound() throws Exception {
         User user = User.builder().id(1L).username("Alice").build();
         when(service.getById(1L)).thenReturn(Optional.of(user));

@@ -3,9 +3,10 @@ package com.iscod.eval.pmtv2_backend.services;
 import com.iscod.eval.pmtv2_backend.models.Task;
 import com.iscod.eval.pmtv2_backend.repositories.TaskRepository;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 import java.util.Optional;
@@ -13,14 +14,14 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-@SpringBootTest
+@ExtendWith(MockitoExtension.class)
 class TaskServiceTest {
 
-    @Autowired
-    private TaskService service;
-
-    @MockitoBean
+    @Mock
     private TaskRepository repo;
+
+    @InjectMocks
+    private TaskService service;
 
     @Test
     void testGetAll() {

@@ -1,7 +1,11 @@
 package com.iscod.eval.pmtv2_backend.controllers;
 
 import com.iscod.eval.pmtv2_backend.models.Project;
+import com.iscod.eval.pmtv2_backend.models.User;
+import com.iscod.eval.pmtv2_backend.repositories.ProjectRepository;
+import com.iscod.eval.pmtv2_backend.repositories.TaskRepository;
 import com.iscod.eval.pmtv2_backend.services.ProjectService;
+import com.iscod.eval.pmtv2_backend.services.UserService;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,8 +28,10 @@ class ProjectControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockitoBean
-    private ProjectService service;
+    @MockitoBean private ProjectService service;
+    @MockitoBean private UserService userService;
+    @MockitoBean private ProjectRepository projectRepository;
+    @MockitoBean private TaskRepository taskRepository;
 
     @Test
     void shouldGetAllProjects() throws Exception {
@@ -57,12 +63,14 @@ class ProjectControllerTest {
 
     @Test
     void shouldCreateProject() throws Exception {
-        Project project = Project.builder().id(1L).name("P1").build();
+        User owner = User.builder().id(1L).username("Alice").email("alice@example.com").build();
+        Project project = Project.builder().id(1L).name("P1").owner(owner).build();
+        when(userService.getById(1L)).thenReturn(Optional.of(owner));
         when(service.save(any(Project.class))).thenReturn(project);
 
         mockMvc.perform(post("/api/projects")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\": \"P1\"}"))
+                        .content("{\"name\": \"P1\", \"description\": \"desc\", \"startDate\": \"2025-01-01\", \"ownerId\": 1}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("P1"));
     }

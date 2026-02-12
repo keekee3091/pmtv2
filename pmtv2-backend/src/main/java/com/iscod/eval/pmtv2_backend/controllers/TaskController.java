@@ -89,7 +89,7 @@ public class TaskController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Task> update(@PathVariable Long id,  @RequestBody Map<String, Object> body, @RequestParam(required = false) Long userId) {
+    public ResponseEntity<Task> update(@PathVariable Long id,  @RequestBody Map<String, Object> body) {
 
         Long assigneeId = body.get("assignedTo") != null ? Long.valueOf(body.get("assignedTo").toString()) : null;
 
@@ -100,37 +100,39 @@ public class TaskController {
             String newStatus = (String) body.get("status");
             String newPriority = (String) body.get("priority");
             LocalDate newDueDate = body.get("dueDate") != null ? LocalDate.parse(body.get("dueDate").toString()) : null;
+            Number changedByNum = (Number) body.get("changedBy");
+            Long changedBy = changedByNum != null ? changedByNum.longValue() : null;
 
             if (hasChanged(existing.getName(), newName)) {
-                createHistory(existing, "name", existing.getName(), newName, userId);
+                createHistory(existing, "name", existing.getName(), newName, changedBy);
                 existing.setName(newName);
             }
 
             if (hasChanged(existing.getDescription(), newDescription)) {
-                createHistory(existing, "description", existing.getDescription(), newDescription, userId);
+                createHistory(existing, "description", existing.getDescription(), newDescription, changedBy);
                 existing.setDescription(newDescription);
             }
 
             if (hasChanged(existing.getStatus(), newStatus)) {
-                createHistory(existing, "status", existing.getStatus(), newStatus, userId);
+                createHistory(existing, "status", existing.getStatus(), newStatus, changedBy);
                 existing.setStatus(newStatus);
             }
 
             if (hasChanged(existing.getPriority(), newPriority)) {
-                createHistory(existing, "priority", existing.getPriority(), newPriority, userId);
+                createHistory(existing, "priority", existing.getPriority(), newPriority, changedBy);
                 existing.setPriority(newPriority);
             }
 
             if (hasChanged(existing.getDueDate(), newDueDate)) {
                 createHistory(existing, "dueDate",
                         String.valueOf(existing.getDueDate()),
-                        String.valueOf(newDueDate), userId);
+                        String.valueOf(newDueDate), changedBy);
                 existing.setDueDate(newDueDate);
             }
 
             Long oldUserId = existing.getAssignedTo() != null ? existing.getAssignedTo().getId() : null;
             if (hasChanged(oldUserId, assigneeId)) {
-                createHistory(existing, "assignedTo", String.valueOf(oldUserId), String.valueOf(assigneeId), userId);
+                createHistory(existing, "assignedTo", String.valueOf(oldUserId), String.valueOf(assigneeId), changedBy);
 
                 if (assigneeId != null) {
                     userService.getById(assigneeId).ifPresent(existing::setAssignedTo);

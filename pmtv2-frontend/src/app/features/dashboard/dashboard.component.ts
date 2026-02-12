@@ -5,6 +5,7 @@ import { AuthService } from '../../core/auth.service';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { TaskFormComponent } from '../tasks/task-form.component';
+import { ProjectFormComponent } from '../projects/project-form.component';
 
 @Component({
   selector: 'app-dashboard',
@@ -27,18 +28,18 @@ import { TaskFormComponent } from '../tasks/task-form.component';
 </ng-container>
 
       <div class="projects">
-        <h3>Projets</h3><button>+ Créer un projet</button>
+        <h3>Projets</h3><button (click)="openProjectModal()">+ Créer un projet</button>
         <ul>
           <li *ngFor="let project of projects" (click)="selectProject(project)" [class.active]="project.id === selectedProject?.id">
-            <strong>{{ project.name }}</strong> - {{ project.description }}
+            <strong>{{ project.name }}</strong> - {{ project.description }} <button *ngIf="canAddTask()" (click)="openTaskModal(false)">+ Ajouter une tâche</button>
           </li>
         </ul>
 
         <div *ngIf="selectedProjectTasks.length > 0" class="tasks">
-          <h4>Tasks du projet : {{ selectedProject?.name }}</h4><button *ngIf="canAddTask()" (click)="openTaskModal()">+ Ajouter une tâche</button>
+          <h4>Tasks du projet : {{ selectedProject?.name }}</h4>
           <ul>
-            <li *ngFor="let task of selectedProjectTasks" (click)="selectTask(task)" [class.active]="task.id === selectedTask?.id"><button *ngIf="canAddTask()">+ Editer une tâche</button>
-              <strong>{{ task.name }}</strong> : {{ task.description }} - <em>{{ task.status }}</em> (prio: {{ task.priority }})
+            <li *ngFor="let task of selectedProjectTasks" (click)="selectTask(task)" [class.active]="task.id === selectedTask?.id"><button *ngIf="canAddTask()" (click)="openTaskModal(true)">+ Editer une tâche</button>
+              <strong>{{ task.name }}</strong> : {{ task.description }} - <em>{{ task.status }}</em> (prio: {{ task.priority }}) {{task.assignedTo?.username || 'Non assignée'}}
             </li>
           </ul>
         </div>
@@ -119,8 +120,13 @@ export class DashboardComponent implements OnInit {
       name: ['', Validators.required],
       description: ['', Validators.required],
       status: ['TODO', Validators.required],
-      priority: ['MEDIUM', Validators.required]
+      priority: ['MEDIUM', Validators.required],
+      assignedTo: ['', Validators.required]
     });
+  }
+
+  canSelectTask(): boolean {
+    return this.role === 'ADMIN' || this.role === 'MEMBER' || this.role === 'OBSERVER'
   }
 
   canAddTask(): boolean {
@@ -131,23 +137,105 @@ export class DashboardComponent implements OnInit {
     return this.role === 'ADMIN'
   }
 
-  openTaskModal() {
-    const dialogRef = this.dialog.open(TaskFormComponent, {
-      width: '350px',
-      height: '350px'
+  openProjectModal() {
+    const dialogRef = this.dialog.open(ProjectFormComponent, {
+      width: '500px',
+      height: 'auto',
+      data: { owner_id: this.userId }
     });
 
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
-        this.http.post<any>(`http://localhost:8080/api/tasks/${this.selectedProject.id}/tasks`, result)
-          .subscribe(task => {
-            this.selectedProjectTasks.push(task);
+        const today = new Date();
+        const formattedDate = today.toISOString().split('T')[0];
+
+        const resultForProject = {
+          name: result.name,
+          description: result.description,
+          startDate: formattedDate,
+          ownerId: result.owner_id
+        };
+        this.http.post<any>('http://localhost:8080/api/projects', resultForProject).subscribe({
+          next: (project) => {
+            this.projects.push(project);
+
+            const ownerAttribution = {
+              user: result.owner_id,
+              project: project.id,
+              role: 'ADMIN'
+            };
+            this.http.post('http://localhost:8080/api/project-members', ownerAttribution).subscribe({
+              error: (err) => console.error('Erreur ajout owner', err)
+            });
+            if (result.members && result.members.length > 0) {
+              result.members.forEach((member: any) => {
+                const memberPayload = {
+                  user: member.user_id,
+                  project: project.id,
+                  role: member.role
+                };
+                this.http.post('http://localhost:8080/api/project-members', memberPayload).subscribe({
+                  next: () => console.log('✅ Membre ajouté :', memberPayload),
+                  error: (err) => console.error('❌ Erreur ajout membre', err)
+                });
+              });
+            }
+          },
+          error: (err) => console.error('Erreur création projet', err)
+        });
+      }
+    });
+  }
+
+  openTaskModal(isEdit: boolean) {
+    let dialogRef;
+
+    if (!isEdit) {
+      dialogRef = this.dialog.open(TaskFormComponent, {
+        width: '350px',
+        height: '350px',
+        data: {
+          projectId: this.selectedProject.id
+        }
+      });
+    } else {
+      dialogRef = this.dialog.open(TaskFormComponent, {
+        width: '350px',
+        height: '350px',
+        data: {
+          projectId: this.selectedProject.id,
+          task: this.selectedTask,
+          changedBy : this.userId
+        }
+      });
+    }
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        if (!isEdit) {
+          this.http.post<any>(`http://localhost:8080/api/projects/${this.selectedProject.id}/tasks`, result).subscribe({
+            next: (task) => this.selectedProjectTasks.push(task),
+            error: (err) => console.error('Erreur création tâche', err)
           });
+        } else {
+          this.http.put<any>(`http://localhost:8080/api/tasks/${this.selectedTask.id}`, result).subscribe({
+            next: (updated) => {
+              const index = this.selectedProjectTasks.findIndex(t => t.id === updated.id);
+              if (index !== -1) this.selectedProjectTasks[index] = updated;
+            },
+            error: (err) => console.error('Erreur édition tâche', err)
+          });
+        }
       }
     });
   }
 
   ngOnInit() {
+
+    this.auth.currentUser$.subscribe(user => {
+      if (user) {
+        this.userId = user.id;
+      }
+    });
     this.http.get<any[]>('http://localhost:8080/api/users').subscribe({
       next: (data) => this.users = data,
       error: (err) => console.error('Erreur chargement users', err)
@@ -182,6 +270,9 @@ export class DashboardComponent implements OnInit {
   }
 
   selectTask(task: any) {
+    if (!this.canSelectTask()) {
+      return;
+    }
     this.selectedTask = task;
 
     this.http.get<any>(`http://localhost:8080/api/tasks/${task.id}`).subscribe({
