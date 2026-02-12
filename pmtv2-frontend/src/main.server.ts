@@ -2,9 +2,9 @@ import 'zone.js';
 
 import { BootstrapContext, bootstrapApplication } from '@angular/platform-browser';
 import { AppComponent } from './app/app.component';
-import { appConfig  } from './app/app.config';
+import { config } from './app/app.config.server';
 
 const bootstrap = (context: BootstrapContext) =>
-    bootstrapApplication(AppComponent, appConfig, context);
+    bootstrapApplication(AppComponent, config, context);
 
 export default bootstrap;

@@ -24,7 +24,7 @@ jobs:
           cache: maven
 
       - name: Build and test
-        run: ./mvnw verify -B
+        run: chmod +x ./mvnw && ./mvnw verify -B
 
       - name: Upload backend coverage report
         uses: actions/upload-artifact@v4
