@@ -6,6 +6,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { MatDialog } from '@angular/material/dialog';
 import { TaskFormComponent } from '../tasks/task-form.component';
 import { ProjectFormComponent } from '../projects/project-form.component';
+import { AddMemberFormComponent } from '../projects/add-member-form.component';
 
 @Component({
   selector: 'app-dashboard',
@@ -59,7 +60,7 @@ import { ProjectFormComponent } from '../projects/project-form.component';
 </div>
 
 <div *ngIf="members.length > 0" class="members">
-          <h4>Membres : {{ selectedProject?.name }}</h4><button *ngIf="canAddAssignee()">+ Ajouter un membre</button>
+          <h4>Membres : {{ selectedProject?.name }}</h4><button *ngIf="canAddAssignee()" (click)="openAddMemberModal()">+ Ajouter un membre</button>
           <ul>
           <li *ngFor="let member of members">
       {{ member.user.username }} - <strong>{{ member.role }}</strong>
@@ -137,6 +138,19 @@ export class DashboardComponent implements OnInit {
     return this.role === 'ADMIN'
   }
 
+  openAddMemberModal() {
+    const dialogRef = this.dialog.open(AddMemberFormComponent, {
+      width: '400px',
+      data: { projectId: this.selectedProject.id }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.selectProject(this.selectedProject);
+      }
+    });
+  }
+
   openProjectModal() {
     const dialogRef = this.dialog.open(ProjectFormComponent, {
       width: '500px',
@@ -212,7 +226,7 @@ export class DashboardComponent implements OnInit {
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
         if (!isEdit) {
-          this.http.post<any>(`http://localhost:8080/api/projects/${this.selectedProject.id}/tasks`, result).subscribe({
+          this.http.post<any>(`http://localhost:8080/api/tasks/${this.selectedProject.id}/tasks`, result).subscribe({
             next: (task) => this.selectedProjectTasks.push(task),
             error: (err) => console.error('Erreur création tâche', err)
           });
@@ -301,7 +315,7 @@ export class DashboardComponent implements OnInit {
     if (!this.selectedProject) return;
     if (this.taskForm.invalid) return;
 
-    this.http.post<any>(`http://localhost:8080/api/projects/${this.selectedProject.id}/tasks`, this.taskForm.value).subscribe({
+    this.http.post<any>(`http://localhost:8080/api/tasks/${this.selectedProject.id}/tasks`, this.taskForm.value).subscribe({
       next: (task) => {
         this.selectedProjectTasks.push(task);
         this.showTaskModal = false;

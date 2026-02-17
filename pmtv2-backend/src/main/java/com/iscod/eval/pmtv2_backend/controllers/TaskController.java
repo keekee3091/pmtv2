@@ -58,8 +58,13 @@ public class TaskController {
 
     @PostMapping("/{id}/tasks")
     public ResponseEntity<Task> createTask(@PathVariable Long id, @RequestBody Map<String, Object> body) {
-        Long assigneeId = Long.valueOf(body.get("assignedTo").toString());
+        Object assignedToRaw = body.get("assignedTo");
+        Long assigneeId = null;
+        if (assignedToRaw != null && !assignedToRaw.toString().isEmpty()) {
+            assigneeId = Long.valueOf(assignedToRaw.toString());
+        }
 
+        Long finalAssigneeId = assigneeId;
         return projectService.getById(id)
                 .map(project -> {
                     Task task = new Task();
@@ -69,8 +74,8 @@ public class TaskController {
                     task.setPriority((String) body.get("priority"));
                     task.setProject(project);
 
-                    if (assigneeId != null) {
-                        userService.getById(assigneeId).ifPresent(task::setAssignedTo);
+                    if (finalAssigneeId != null) {
+                        userService.getById(finalAssigneeId).ifPresent(task::setAssignedTo);
                     }
 
                     Task savedTask = taskRepository.save(task);

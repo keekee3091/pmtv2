@@ -67,7 +67,7 @@ export class TaskFormComponent implements OnInit {
       description: [this.data?.task?.description || '', Validators.required],
       status: [this.data?.task?.status || 'TODO', Validators.required],
       priority: [this.data?.task?.priority || 'MEDIUM', Validators.required],
-      assignedTo: [this.data?.task?.assignedTo?.id || '', Validators.required],
+      assignedTo: [this.data?.task?.assignedTo?.id || ''],
       changedBy: ['']
     });
 
