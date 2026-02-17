@@ -31,7 +31,7 @@ import { ProjectFormComponent } from '../projects/project-form.component';
         <h3>Projets</h3><button (click)="openProjectModal()">+ Créer un projet</button>
         <ul>
           <li *ngFor="let project of projects" (click)="selectProject(project)" [class.active]="project.id === selectedProject?.id">
-            <strong>{{ project.name }}</strong> - {{ project.description }} <button *ngIf="canAddTask()" (click)="openTaskModal(false)">+ Ajouter une tâche</button>
+            <strong>{{ project.name }}</strong> - {{ project.description }} <button *ngIf="canAddTask() && project.id === selectedProject?.id" (click)="openTaskModal(false)">+ Ajouter une tâche</button>
           </li>
         </ul>
 
@@ -250,17 +250,17 @@ export class DashboardComponent implements OnInit {
 
   selectProject(project: any) {
     this.selectedProject = project;
+    this.role = null;
+    this.selectedProjectTasks = [];
+    this.members = [];
+    this.selectedTask = null;
+    this.selectedTaskHistory = [];
 
     this.http.get<any>(`http://localhost:8080/api/projects/${project.id}`).subscribe({
       next: (data) => {
         this.selectedProjectTasks = data.tasks;
         this.members = data.members;
 
-        this.auth.currentUser$.subscribe(user => {
-          if (user) {
-            this.userId = user.id;
-          }
-        });
         const currentMember = this.members.find((m: any) => m.user.id === this.userId);
         this.role = currentMember ? currentMember.role : null;
 
