@@ -31,12 +31,12 @@ import { ProjectFormComponent } from '../projects/project-form.component';
         <h3>Projets</h3><button (click)="openProjectModal()">+ Créer un projet</button>
         <ul>
           <li *ngFor="let project of projects" (click)="selectProject(project)" [class.active]="project.id === selectedProject?.id">
-            <strong>{{ project.name }}</strong> - {{ project.description }} <button *ngIf="canAddTask() && project.id === selectedProject?.id" (click)="openTaskModal(false)">+ Ajouter une tâche</button>
+            <strong>{{ project.name }}</strong> - {{ project.description }}
           </li>
         </ul>
 
-        <div *ngIf="selectedProjectTasks.length > 0" class="tasks">
-          <h4>Tasks du projet : {{ selectedProject?.name }}</h4>
+        <div *ngIf="selectedProject" class="tasks">
+          <h4>Tasks du projet : {{ selectedProject?.name }}</h4> <button *ngIf="canAddTask()" (click)="openTaskModal(false)">+ Ajouter une tâche</button>
           <ul>
             <li *ngFor="let task of selectedProjectTasks" (click)="selectTask(task)" [class.active]="task.id === selectedTask?.id"><button *ngIf="canAddTask()" (click)="openTaskModal(true)">+ Editer une tâche</button>
               <strong>{{ task.name }}</strong> : {{ task.description }} - <em>{{ task.status }}</em> (prio: {{ task.priority }}) {{task.assignedTo?.username || 'Non assignée'}}
